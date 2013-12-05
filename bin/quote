@@ -1,0 +1,145 @@
+#!/usr/bin/env python
+import os
+import os.path
+import sys
+import csv
+import json
+import stat
+import glob
+import time
+import urllib
+import urllib2
+import argparse
+import StringIO
+import tempfile
+
+class Quote:
+    """
+    retrives stock quote from Yahoo! finance service
+    more info: http://www.gummy-stuff.org/Yahoo-data.htm
+    """
+    URL = 'http://download.finance.yahoo.com/d/quotes.csv' 
+    TEMP_DIR = '/tmp'
+    FIELDS = (
+        { 'symbol': 's' },
+        { 'last-trade': 'l1' },
+        { 'change-percent': 'p2' },
+        { 'change': 'c1' },
+        { 'day-low': 'g' },
+        { 'day-high': 'h' }
+    )
+
+    def __init__( self, symbol, timeout ):
+        """
+        constructor
+        """
+        self.symbol = symbol
+        self.timeout = timeout
+        self.lookup = {}
+
+
+    def format( self, format ):
+        """
+        prints formatted symbol data
+        """
+        return str( format ).format( **self.lookup )
+
+
+    def get_quote( self ):
+        """
+        fetches and caches the symbol data
+        """
+        prefix = "{script}-{user}-{symbol}".format(
+            script = os.path.basename( __file__ ),
+            user = os.getlogin(),
+            symbol = self.symbol.lower()
+        )
+
+        cache = {}
+        files = glob.glob( "{dir}/{prefix}-*".format( dir = self.TEMP_DIR, prefix = prefix ) )
+        for file in files:
+            if os.access( file, os.W_OK ):
+                cache[ 'filename' ] = file
+                cache[ 'mtime' ] = os.stat( file ).st_mtime
+                break
+
+        if len( cache ) == 0:
+            temp_file = tempfile.NamedTemporaryFile(
+                delete = False,
+                prefix = "{prefix}-".format( prefix = prefix ),
+                dir = self.TEMP_DIR
+            )
+            cache[ 'filename' ] = temp_file.name
+            cache[ 'mtime' ] = 0
+            temp_file.close()
+
+        filehandle = open( cache[ 'filename' ], 'r+' )
+        if  time.time() > ( cache[ 'mtime' ] + self.timeout ):
+
+            query_fields = {
+                's': self.symbol,
+                'f': ''.join( map( lambda x: x.values()[0], self.FIELDS ) )
+            }
+            query_string = urllib.urlencode( query_fields )
+            uri = self.URL + '?' + query_string
+
+            response = urllib2.urlopen( uri )
+            content = StringIO.StringIO( response.read() )
+            data = csv.reader( content, delimiter=',' ).next()
+
+            fields = map( lambda x: x.keys()[0], self.FIELDS )
+            for index in range( 0, len( fields ) ):
+                self.lookup[ fields[ index ] ] = data[ index ]
+
+            filehandle.truncate()
+            filehandle.write(
+                json.dumps( self.lookup )
+            )
+        else:
+            self.lookup = json.loads(
+                filehandle.read()
+            )
+
+        filehandle.close()
+        return True
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description = 'Script to fetch stock quotes'
+    )
+
+    parser.add_argument(
+        '-s', '--symbol',
+        help = 'ticker symbol',
+        type = str,
+        default = 'YHOO'
+    )
+
+    parser.add_argument(
+        '-f', '--format',
+        help = 'output format',
+        type = str,
+        default = '{symbol}:{last-trade} {change}'
+    )
+
+    parser.add_argument(
+        '-t', '--timeout',
+        help = 'cache timeout',
+        type = int,
+        default = 600
+    )
+    
+    args = parser.parse_args()
+
+    quote = Quote(
+        args.symbol,
+        args.timeout
+    )
+
+    if quote.get_quote():
+        sys.stdout.write(
+            quote.format( args.format )
+        )
+        

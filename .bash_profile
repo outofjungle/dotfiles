@@ -10,3 +10,9 @@ fi
 if [ -f $(brew --prefix)/Library/Contributions/brew_bash_completion.sh ]; then
   . $(brew --prefix)/Library/Contributions/brew_bash_completion.sh
 fi
+export PATH=/usr/local/bin:$PATH
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
+TMUXENV='tmux set-environment -g CWD "$PWD"'
+export PROMPT_COMMAND="($TMUXENV 2>/dev/null)"
