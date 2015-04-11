@@ -64,15 +64,24 @@ function show_prompt -d "Shows prompt with cue for current priv"
   set_color normal
 end
 
+# Send notification message to growl
+function notify_growl -d "Send notification message to growl"
+  growlnotify --title $argv[3]\
+    --message "command returned $argv[2] in $argv[1]"
+end
+
 # Notify completion of long running commands
 function notify_cmd_complete -d "Notify completion of long running commands"
   if set -q CMD_DURATION
-    set last_time $CMD_DURATION
-    set -l time (echo $last_time | awk 'BEGIN { FS="." } ; { print $1 }')
-    if test $time -gt 10
-      set last_status $status
-      growlnotify --title $_\
-        --message "command returned $last_status in $last_time"
+    set -l param $CMD_DURATION $status $_
+    set -l gt_min (echo $param[1] | grep ' ')
+    if test -n $gt_min
+      notify_growl $param
+    else
+      set -l time (echo $param[1] | awk 'BEGIN { FS="." } ; { print $1 }')
+      if test $time -gt 10
+        notify_growl $param
+      end
     end
   end
 end
