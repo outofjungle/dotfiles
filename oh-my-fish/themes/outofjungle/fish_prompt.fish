@@ -75,13 +75,13 @@ function notify_cmd_complete -d "Notify completion of long running commands"
   if set -q CMD_DURATION
     set -l param $CMD_DURATION $status $_
     set -l gt_min (echo $param[1] | grep ' ')
-    if test -n $gt_min
-      notify_growl $param
-    else
+    if test -z $gt_min
       set -l time (echo $param[1] | awk 'BEGIN { FS="." } ; { print $1 }')
       if test $time -gt 10
         notify_growl $param
       end
+    else
+        notify_growl $param
     end
   end
 end
