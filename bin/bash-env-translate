@@ -1,0 +1,6 @@
+#! /usr/local/bin/fish
+
+while read line
+    set splits (string match -r '^(.*)=(\'.*\');$' $line)
+    echo "set -gx $splits[2] $splits[3]"
+end
