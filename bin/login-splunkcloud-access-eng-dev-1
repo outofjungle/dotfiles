@@ -1,4 +1,6 @@
-#! /usr/local/bin/fish
+#! /usr/bin/env fish
+
+# login-splunkcloud-access-eng-dev-1 | source &>/dev/null
 
 set -gx OKTA_AWS_EMBED_URL "https://splunkcloud.okta.com/home/amazon_aws/0oasfwc0nhME7OCCl2p6/272"
 set -gx OKTA_AWS_ROLE_ARN "arn:aws:iam::492591606558:role/splunkcloud_account_admin"
