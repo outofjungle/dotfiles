@@ -1,0 +1,5 @@
+#! /usr/local/bin/fish
+
+set -gx OKTA_AWS_EMBED_URL "https://splunkcloud.okta.com/home/amazon_aws/0oa4970a81cTHXP6u2p7/272"
+set -gx OKTA_AWS_ROLE_ARN "arn:aws-us-gov:iam::058321702461:role/splunkcloud_account_admin"
+okta-aws-login | bash-env-translate
