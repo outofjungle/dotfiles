@@ -1,0 +1,11 @@
+#! /usr/bin/env fish
+
+if test (count $argv) -lt 1
+  echo "Usage: remove-bounce <email>"
+else
+    curl --request POST \
+        --url https://splunkcloud.okta.com/api/v1/org/email/bounces/remove-list \
+        --header "Authorization: SSWS $OKTA_API_TOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"emailAddresses\": [\"$argv[1]\"]}"
+end
