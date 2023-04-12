@@ -1,0 +1,7 @@
+#! /usr/bin/env fish
+
+if test (count $argv) -lt 1
+    echo "Usage: make-jwks <key-id>"
+else
+    step crypto jwk create $argv[1].public  $argv[1].private --kty=RSA --alg=RS256 --use=sig --size=2048 --kid=$argv[1] --no-password --insecure
+end
