@@ -4,4 +4,4 @@
 
 set -gx OKTA_AWS_EMBED_URL "https://splunkcloud.okta.com/home/amazon_aws/0oasfwc0nhME7OCCl2p6/272"
 set -gx OKTA_AWS_ROLE_ARN "arn:aws:iam::848602621546:role/splunkcloud_account_admin"
-okta-aws-login | bash-env-translate
+okta-aws-login --device-code | bash-env-translate
