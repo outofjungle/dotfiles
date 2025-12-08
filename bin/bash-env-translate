@@ -1,6 +1,11 @@
 #! /usr/bin/env fish
 
 while read line
+    if test -z (string trim "$line")
+        continue
+    end
     set splits (string match -r '^(.*)=(\'.*\');$' $line)
-    echo "set -gx $splits[2] $splits[3]"
+    if test -n "$splits[2]"
+        echo "set -gx $splits[2] $splits[3]"
+    end
 end
