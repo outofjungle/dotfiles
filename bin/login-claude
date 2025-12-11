@@ -1,5 +1,65 @@
 #! /usr/bin/env fish
 
-# login-claude | source &>/dev/null
+# login-claude - Writes AWS credentials to disk for Claude/Bedrock
+# Usage: login-claude
 
-claude-login -m Claude-Sonnet-4.5 | bash-env-translate
+# Get credentials from claude-login (outputs bash export statements)
+set creds (claude-login -m Claude-Sonnet-4.5)
+
+# Parse the credentials
+set aws_key ""
+set aws_secret ""
+set aws_token ""
+set aws_region ""
+
+for line in $creds
+    # Extract values from bash export statements like: export AWS_ACCESS_KEY_ID='...'
+    if string match -q "export AWS_ACCESS_KEY_ID=*" $line
+        set aws_key (string replace -r "^export AWS_ACCESS_KEY_ID='(.*)';?\$" '$1' $line)
+    else if string match -q "export AWS_SECRET_ACCESS_KEY=*" $line
+        set aws_secret (string replace -r "^export AWS_SECRET_ACCESS_KEY='(.*)';?\$" '$1' $line)
+    else if string match -q "export AWS_SESSION_TOKEN=*" $line
+        set aws_token (string replace -r "^export AWS_SESSION_TOKEN='(.*)';?\$" '$1' $line)
+    else if string match -q "export AWS_REGION=*" $line
+        set aws_region (string replace -r "^export AWS_REGION='(.*)';?\$" '$1' $line)
+    end
+end
+
+# Check if we got the required credentials
+if test -z "$aws_key" -o -z "$aws_secret"
+    echo "Error: Failed to retrieve AWS credentials" >&2
+    exit 1
+end
+
+# Ensure ~/.aws directory exists
+mkdir -p ~/.aws
+
+# Write credentials to disk
+echo "# AWS Credentials File - Updated by login-claude on "(date) > ~/.aws/credentials
+echo "" >> ~/.aws/credentials
+echo "[bedrock]" >> ~/.aws/credentials
+echo "aws_access_key_id = $aws_key" >> ~/.aws/credentials
+echo "aws_secret_access_key = $aws_secret" >> ~/.aws/credentials
+
+# Add session token if present (for temporary credentials)
+if test -n "$aws_token"
+    echo "aws_session_token = $aws_token" >> ~/.aws/credentials
+end
+
+# Update config file with region if provided
+if test -n "$aws_region"
+    echo "# AWS Config File - Updated by login-claude on "(date) > ~/.aws/config
+    echo "" >> ~/.aws/config
+    echo "[profile bedrock]" >> ~/.aws/config
+    echo "region = $aws_region" >> ~/.aws/config
+    echo "output = json" >> ~/.aws/config
+end
+
+# Secure the credentials file
+chmod 600 ~/.aws/credentials
+chmod 600 ~/.aws/config
+
+echo "✓ AWS credentials written to ~/.aws/credentials (bedrock profile)"
+if test -n "$aws_region"
+    echo "✓ Region set to: $aws_region"
+end
