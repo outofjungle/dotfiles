@@ -9,11 +9,5 @@ set -gx SSH_AUTH_SOCK "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t
 fish_add_path -g $HOME/bin
 fish_add_path -g $HOME/go/bin
 
-# Added by Windsurf
-fish_add_path /Users/vevenka7/.codeium/windsurf/bin
-
-# Added by Windsurf
-fish_add_path /Users/vevenka7/.codeium/windsurf/bin
-
-# Added by Windsurf
-fish_add_path /Users/vevenka7/.codeium/windsurf/bin
+# ESP
+set -gx ESP_IDF_PATH /Users/ven/Workspace/ESP/esp-idf
