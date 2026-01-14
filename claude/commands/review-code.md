@@ -415,3 +415,20 @@ Use the TodoWrite tool to create trackable todo items:
   - File path and line number
   - Specific and actionable description
 - Organize systematically so items can be worked through in priority order
+
+---
+
+## After Review Completion
+
+After completing the code review, ask the user:
+"Would you like to copy the contents of the review to your clipboard?"
+
+If the user answers yes:
+1. Echo the entire review content and pipe it to `pbcopy` using a heredoc
+2. Use this exact format:
+```bash
+cat <<'EOF' | pbcopy
+[full review content here]
+EOF
+```
+3. Inform the user that the review has been copied to their clipboard
