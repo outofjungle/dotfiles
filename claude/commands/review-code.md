@@ -424,13 +424,17 @@ Present findings as formatted feedback to share with the developer:
   - Why this matters and recommended fix
 - Format in clear markdown suitable for merge request comments
 
-### For Full Repository Scans (Option 2):
-Use the TodoWrite tool to create trackable todo items:
-- Each todo should include:
-  - Priority label in the content (e.g., "[P0] Fix SQL injection in auth.go:42")
-  - File path and line number
-  - Specific and actionable description
-- Organize systematically so items can be worked through in priority order
+### For Full Repository Scans (Option 3):
+First, check if the project specifies a preferred todo tracking tool in @AGENTS.md or @CLAUDE.md:
+- If **beads/bd** is specified: Use `bd create` commands to file issues for each finding
+  - Create issues with priority in title (e.g., "[P0] Fix SQL injection in auth.go:42")
+  - Include file path, line number, and actionable description in the issue description
+  - Organize by priority so items can be worked through systematically
+- If **TodoWrite** is allowed or no preference specified: Use the TodoWrite tool to create trackable todo items
+  - Each todo should include priority label in the content
+  - Include file path and line number
+  - Provide specific and actionable descriptions
+- **Important**: Always respect the project's issue tracking preference to maintain consistency
 
 ---
 
