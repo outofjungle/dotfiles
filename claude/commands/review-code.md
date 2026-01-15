@@ -1,6 +1,22 @@
 First, ask the user if they want to:
-1. Review only the current changes in the feature branch (git diff against main/base branch)
-2. Review the entire repository
+1. Review local feature branch against upstream main (currently checked out branch)
+2. Review remote feature branch against upstream main (PR/MR review - branch not checked out)
+3. Review the entire repository
+
+**For option 1 (local feature branch review):**
+- This reviews the branch you currently have checked out locally
+- Fetch latest changes: `git fetch origin`
+- Identify the upstream base branch (usually origin/main or origin/master) - ask user if unclear
+- Review the diff: `git diff origin/main...HEAD` (or the specified upstream base)
+- This shows changes made in your local branch since it diverged from upstream main
+
+**For option 2 (remote feature branch PR/MR review):**
+- This reviews a remote branch without checking it out locally
+- Ask the user for the remote branch name (e.g., "origin/feature-branch")
+- Fetch latest changes: `git fetch origin`
+- Identify the upstream base branch (usually origin/main or origin/master) - ask user if unclear
+- Review the diff: `git diff origin/main...origin/feature-branch` (or the specified base)
+- This shows changes made in the remote feature branch since it diverged from upstream main
 
 **Review Mindset:** Approach this code review as a senior engineer wearing multiple hats. Bring the core values and concerns of each engineering discipline:
 
