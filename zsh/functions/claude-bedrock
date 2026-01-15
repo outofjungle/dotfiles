@@ -1,0 +1,18 @@
+# Run Claude Code with Bedrock credentials
+function claude-bedrock() {
+    # Get credentials from claude-login and parse into KEY=VALUE format
+    local env_vars=()
+    while IFS= read -r line; do
+        # Skip lines that don't match VAR=...
+        if [[ $line =~ ^[A-Z_]+= ]]; then
+            # Remove quotes and semicolons: VAR='value'; -> VAR=value
+            clean_line=$(echo "$line" | sed "s/='\(.*\)';\\?$/=\1/")
+            env_vars+=("$clean_line")
+        fi
+    done < <(claude-login -m Claude-Sonnet-4.5 2>/dev/null)
+
+    env_vars+=("CLAUDE_CODE_MAX_OUTPUT_TOKENS=32768")
+
+    # Run claude with the bedrock environment
+    env "${env_vars[@]}" claude "$@"
+}
