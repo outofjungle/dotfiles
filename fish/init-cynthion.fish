@@ -3,7 +3,8 @@ function init-cynthion
     # Activates Python virtual environment with LUNA, Cynthion CLI, Facedancer, and OSS CAD Suite
     # LUNA will auto-detect your connected Cynthion device via Apollo debugger
 
-    set -l CYNTHION_DIR ~/Workspace/cynthion-toolchain
+    set -l CYNTHION_DIR $HOME/Workspace/cynthion-toolchain
+    set -l VENV_DIR $HOME/.venvs/cynthion
 
     if not test -d $CYNTHION_DIR
         echo "Error: Cynthion toolchain directory not found at $CYNTHION_DIR"
@@ -11,11 +12,11 @@ function init-cynthion
     end
 
     # Activate Python virtual environment
-    if test -f $CYNTHION_DIR/luna-venv/bin/activate.fish
-        source $CYNTHION_DIR/luna-venv/bin/activate.fish
+    if test -f $VENV_DIR/bin/activate.fish
+        source $VENV_DIR/bin/activate.fish
         echo "✓ Activated Python virtual environment"
     else
-        echo "Error: luna-venv not found"
+        echo "Error: Python virtual environment not found at $VENV_DIR"
         return 1
     end
 
