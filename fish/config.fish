@@ -13,8 +13,5 @@ fish_add_path -g $HOME/go/bin
 fish_add_path -g /opt/homebrew/opt/rustup/bin
 fish_add_path -g $HOME/.cargo/bin
 
-# Activate ESP-IDF/Matter environment (run once per terminal)
-source ~/Workspace/dotfiles/fish/init-idf.fish
-
-# Load Cynthion development environment function
-source ~/Workspace/dotfiles/fish/init-cynthion.fish
+# claude
+fish_add_path -g $HOME/.local/bin/
