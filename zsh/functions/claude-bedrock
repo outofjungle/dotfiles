@@ -1,18 +1,114 @@
 # Run Claude Code with Bedrock credentials
 function claude-bedrock() {
-    # Get credentials from claude-login and parse into KEY=VALUE format
-    local env_vars=()
-    while IFS= read -r line; do
-        # Skip lines that don't match VAR=...
-        if [[ $line =~ ^[A-Z_]+= ]]; then
-            # Remove quotes and semicolons: VAR='value'; -> VAR=value
-            clean_line=$(echo "$line" | sed "s/='\(.*\)';\\?$/=\1/")
-            env_vars+=("$clean_line")
+    # Check for --logout flag
+    for arg in "$@"; do
+        if [[ "$arg" == "--logout" ]]; then
+            local settings_file=~/Library/Application\ Support/Code/User/settings.json
+
+            if [[ -f "$settings_file" ]]; then
+                # Remove claudeCode.environmentVariables and claudeCode.claudeProcessWrapper from VS Code settings using jq
+                if command -v jq >/dev/null 2>&1; then
+                    local temp_file=$(mktemp)
+                    jq 'del(.["claudeCode.environmentVariables"]) | del(.["claudeCode.claudeProcessWrapper"])' "$settings_file" > "$temp_file"
+                    mv "$temp_file" "$settings_file"
+
+                    # Also remove the wrapper script if it exists
+                    local wrapper_script=~/.config/claude/claude-wrapper.sh
+                    if [[ -f "$wrapper_script" ]]; then
+                        rm "$wrapper_script"
+                    fi
+
+                    echo "✓ Removed Bedrock credentials and plugin settings from VS Code"
+                    echo "  Reload VS Code window to complete logout"
+                else
+                    echo "✗ jq not found - cannot remove credentials"
+                    echo "  Install jq: brew install jq"
+                    return 1
+                fi
+            else
+                echo "✓ No VS Code settings file found (nothing to clean up)"
+            fi
+            return 0
         fi
-    done < <(claude-login -m Claude-Sonnet-4.5 2>/dev/null)
+    done
+
+    # Parse arguments to extract all --plugin-dir occurrences
+    local plugin_dir_args=()
+    local remaining_args=()
+
+    local i=1
+    while [[ $i -le $# ]]; do
+        if [[ "${@[$i]}" == "--plugin-dir" ]]; then
+            # Next argument is the plugin directory
+            plugin_dir_args+=("--plugin-dir")
+            ((i++))
+            if [[ $i -le $# ]]; then
+                plugin_dir_args+=("${@[$i]}")
+            fi
+        else
+            remaining_args+=("${@[$i]}")
+        fi
+        ((i++))
+    done
+
+    # Check if we have valid cached credentials in VS Code settings
+    local settings_file=~/Library/Application\ Support/Code/User/settings.json
+    local use_cached=false
+    local env_vars=()
+
+    if [[ -f "$settings_file" ]] && command -v jq >/dev/null 2>&1; then
+        # Try to extract credentials from VS Code settings
+        local cached_creds=()
+        while IFS= read -r line; do
+            [[ -n "$line" ]] && cached_creds+=("$line")
+        done < <(jq -r '.["claudeCode.environmentVariables"][]? | "\(.name)=\(.value)"' "$settings_file" 2>/dev/null)
+
+        if [[ ${#cached_creds[@]} -gt 0 ]]; then
+            # Test if cached credentials are still valid by making a quick AWS STS call
+            local temp_token=""
+            for line in "${cached_creds[@]}"; do
+                if [[ "$line" =~ ^AWS_SESSION_TOKEN=(.+)$ ]]; then
+                    temp_token="${BASH_REMATCH[1]}"
+                    break
+                fi
+            done
+
+            if [[ -n "$temp_token" ]]; then
+                # Build env vars from cached credentials for validation test
+                local test_env_vars=()
+                for line in "${cached_creds[@]}"; do
+                    if [[ "$line" =~ ^AWS_ ]]; then
+                        test_env_vars+=("$line")
+                    fi
+                done
+
+                # Quick validation: try to call AWS STS to check if token is valid
+                # Suppress output, we only care about exit code
+                if env "${test_env_vars[@]}" aws sts get-caller-identity >/dev/null 2>&1; then
+                    # Credentials are valid, reuse them
+                    use_cached=true
+                    for line in "${cached_creds[@]}"; do
+                        env_vars+=("$line")
+                    done
+                fi
+            fi
+        fi
+    fi
+
+    # If no valid cached credentials, authenticate with claude-login
+    if [[ "$use_cached" == false ]]; then
+        while IFS= read -r line; do
+            # Skip lines that don't match VAR=...
+            if [[ $line =~ ^[A-Z_]+= ]]; then
+                # Remove quotes and semicolons: VAR='value'; -> VAR=value
+                clean_line=$(echo "$line" | sed "s/='\(.*\)';\\?$/=\1/")
+                env_vars+=("$clean_line")
+            fi
+        done < <(claude-login -m Claude-Sonnet-4.5 --vscode 2>/dev/null)
+    fi
 
     env_vars+=("CLAUDE_CODE_MAX_OUTPUT_TOKENS=32768")
 
     # Run claude with the bedrock environment
-    env "${env_vars[@]}" claude "$@"
+    env "${env_vars[@]}" claude "${plugin_dir_args[@]}" "${remaining_args[@]}"
 }

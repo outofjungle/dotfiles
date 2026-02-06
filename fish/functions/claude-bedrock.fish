@@ -4,12 +4,19 @@ function claude-bedrock --description 'Run Claude Code with Bedrock credentials'
         set -l settings_file ~/Library/Application\ Support/Code/User/settings.json
 
         if test -f "$settings_file"
-            # Remove claudeCode.environmentVariables from VS Code settings using jq
+            # Remove claudeCode.environmentVariables and claudeCode.claudeProcessWrapper from VS Code settings using jq
             if command -v jq >/dev/null 2>&1
                 set -l temp_file (mktemp)
-                jq 'del(.["claudeCode.environmentVariables"])' "$settings_file" > "$temp_file"
+                jq 'del(.["claudeCode.environmentVariables"]) | del(.["claudeCode.claudeProcessWrapper"])' "$settings_file" > "$temp_file"
                 mv "$temp_file" "$settings_file"
-                echo "✓ Removed Bedrock credentials from VS Code"
+
+                # Also remove the wrapper script if it exists
+                set -l wrapper_script ~/.config/claude/claude-wrapper.sh
+                if test -f "$wrapper_script"
+                    rm "$wrapper_script"
+                end
+
+                echo "✓ Removed Bedrock credentials and plugin settings from VS Code"
                 echo "  Reload VS Code window to complete logout"
             else
                 echo "✗ jq not found - cannot remove credentials"
